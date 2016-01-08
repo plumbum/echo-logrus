@@ -31,26 +31,27 @@ func NewWithNameAndLogger(name string, l *logrus.Logger) echo.MiddlewareFunc {
 			err = next(c)
 
 			latency := time.Since(start)
+			request := c.Request()
 
-			remoteAddr := c.Request().RemoteAddr
-			remoteIP, _, errSplit := net.SplitHostPort(remoteAddr)
+			remoteIP, _, errSplit := net.SplitHostPort(request.RemoteAddr)
 			if errSplit != nil {
 				logrus.WithFields(logrus.Fields{
 					"func":  "net.SplitHostPort",
 					"error": errSplit,
 				}).Error("Can't extract remote IP")
-				remoteIP = remoteAddr
+				remoteIP = request.RemoteAddr
 			}
 
 			entry := l.WithFields(logrus.Fields{
-				"request": c.Request().RequestURI,
-				"method":  c.Request().Method,
+				"request": request.RequestURI,
+				"method":  request.Method,
+				"protocol": request.Proto,
 				"remote":  remoteIP,
 				"status":  c.Response().Status(),
 				"latency": latency,
 			})
 
-			if reqID := c.Request().Header.Get("X-Request-Id"); reqID != "" {
+			if reqID := request.Header.Get("X-Request-Id"); reqID != "" {
 				entry = entry.WithField("request_id", reqID)
 			}
 
