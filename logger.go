@@ -3,6 +3,7 @@
 package echologrus // fknsrs.biz/p/echo-logrus
 
 import (
+	"net"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -31,10 +32,20 @@ func NewWithNameAndLogger(name string, l *logrus.Logger) echo.MiddlewareFunc {
 
 			latency := time.Since(start)
 
+			remoteAddr := c.Request().RemoteAddr
+			remoteIP, _, errSplit := net.SplitHostPort(remoteAddr)
+			if errSplit != nil {
+				logrus.WithFields(logrus.Fields{
+					"func":  "net.SplitHostPort",
+					"error": errSplit,
+				}).Error("Can't extract remote IP")
+				remoteIP = remoteAddr
+			}
+
 			entry := l.WithFields(logrus.Fields{
 				"request": c.Request().RequestURI,
 				"method":  c.Request().Method,
-				"remote":  c.Request().RemoteAddr,
+				"remote":  remoteIP,
 				"status":  c.Response().Status(),
 				"latency": latency,
 			})
