@@ -24,13 +24,10 @@ func NewWithName(name string) echo.MiddlewareFunc {
 func NewWithNameAndLogger(name string, l *logrus.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c *echo.Context) error {
+			var err error
 			start := time.Now()
-			isError := false
 
-			if err := next(c); err != nil {
-				c.Error(err)
-				isError = true
-			}
+			err = next(c)
 
 			latency := time.Since(start)
 
@@ -46,8 +43,9 @@ func NewWithNameAndLogger(name string, l *logrus.Logger) echo.MiddlewareFunc {
 				entry = entry.WithField("request_id", reqID)
 			}
 
-			if isError {
-				entry.Error("error by handling request")
+			if err != nil {
+				entry.Error(err)
+				c.Error(err)
 			} else {
 				entry.Info("completed handling request")
 			}
