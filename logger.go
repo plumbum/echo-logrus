@@ -43,12 +43,13 @@ func NewWithNameAndLogger(name string, l *logrus.Logger) echo.MiddlewareFunc {
 			}
 
 			entry := l.WithFields(logrus.Fields{
-				"request": request.RequestURI,
-				"method":  request.Method,
+				"request":  request.RequestURI,
+				"method":   request.Method,
 				"protocol": request.Proto,
-				"remote":  remoteIP,
-				"status":  c.Response().Status(),
-				"latency": latency,
+				"length":   request.ContentLength,
+				"remote":   remoteIP,
+				"status":   c.Response().Status(),
+				"latency":  latency,
 			})
 
 			if reqID := request.Header.Get("X-Request-Id"); reqID != "" {
