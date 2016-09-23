@@ -8,21 +8,22 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/labstack/echo"
+	"strconv"
 )
 
 // New returns a new middleware handler with a default name and logger
-func New() echo.MiddlewareFunc {
-	return NewWithName("web")
+func NewMiddleware() echo.MiddlewareFunc {
+	return NewMiddlewareWithName("web")
 }
 
 // NewWithName returns a new middleware handler with the specified name
-func NewWithName(name string) echo.MiddlewareFunc {
-	return NewWithNameAndLogger(name, logrus.StandardLogger())
+func NewMiddlewareWithName(name string) echo.MiddlewareFunc {
+	return NewMiddlewareWithNameAndLogger(name, NewStandart())
 }
 
 // NewWithNameAndLogger returns a new middleware handler with the specified name
 // and logger
-func NewWithNameAndLogger(name string, l *logrus.Logger) echo.MiddlewareFunc {
+func NewMiddlewareWithNameAndLogger(name string, l *Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			start := time.Now()
@@ -52,7 +53,7 @@ func NewWithNameAndLogger(name string, l *logrus.Logger) echo.MiddlewareFunc {
 				entry.Error(err)
 				c.Error(err)
 			} else {
-				entry.Info("done")
+				entry.Info(request.Method() + ":" + strconv.Itoa(c.Response().Status()))
 			}
 
 			return nil
