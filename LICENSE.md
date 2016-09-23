@@ -1,5 +1,5 @@
-Copyright (c) 2015, Conrad Pankoff
-==================================
+Copyright (c) 2015, Conrad Pankoff. 2016, Ivan A-R
+==================================================
 All rights reserved.
 --------------------
   
