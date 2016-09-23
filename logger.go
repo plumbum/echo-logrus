@@ -1,9 +1,9 @@
-// Package echologrus provides a middleware for echo that logs request details
+// Package echologrus provides a middleware for echo v2 that logs request details
 // via the logrus logging library
-package echologrus // fknsrs.biz/p/echo-logrus
+// Original from fknsrs.biz/p/echo-logrus
+package echologrus
 
 import (
-	"net"
 	"time"
 
 	"github.com/Sirupsen/logrus"
@@ -24,35 +24,27 @@ func NewWithName(name string) echo.MiddlewareFunc {
 // and logger
 func NewWithNameAndLogger(name string, l *logrus.Logger) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
-		return func(c *echo.Context) error {
-			var err error
+		return func(c echo.Context) error {
 			start := time.Now()
 
-			err = next(c)
+			err := next(c)
 
 			latency := time.Since(start)
 			request := c.Request()
 
-			remoteIP, _, errSplit := net.SplitHostPort(request.RemoteAddr)
-			if errSplit != nil {
-				logrus.WithFields(logrus.Fields{
-					"func":  "net.SplitHostPort",
-					"error": errSplit,
-				}).Error("Can't extract remote IP")
-				remoteIP = request.RemoteAddr
-			}
-
 			entry := l.WithFields(logrus.Fields{
-				"request":  request.RequestURI,
-				"method":   request.Method,
-				"protocol": request.Proto,
-				"length":   request.ContentLength,
-				"remote":   remoteIP,
+				"prefix": name,
+				"remote_ip":   request.RealIP(),
+				"method":   request.Method(),
+				"uri":  request.URI(),
 				"status":   c.Response().Status(),
-				"latency":  latency,
+				"bytes_in": request.ContentLength(),
+				"bytes_out": c.Response().Size(),
+				"latency":  latency.Nanoseconds()/1000,
+				"latency_human":  latency.String(),
 			})
 
-			if reqID := request.Header.Get("X-Request-Id"); reqID != "" {
+			if reqID := request.Header().Get("X-Request-Id"); reqID != "" {
 				entry = entry.WithField("request_id", reqID)
 			}
 
@@ -60,7 +52,7 @@ func NewWithNameAndLogger(name string, l *logrus.Logger) echo.MiddlewareFunc {
 				entry.Error(err)
 				c.Error(err)
 			} else {
-				entry.Info("completed handling request")
+				entry.Info("done")
 			}
 
 			return nil
